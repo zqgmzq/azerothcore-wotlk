@@ -2033,6 +2033,33 @@ class Player : public Unit, public GridObject<Player>
         void BuildPlayerRepop();
         void RepopAtGraveyard();
 
+        /*********************************************************/
+        /***                  CUSTOM SYSTEMS                   ***/
+        /*********************************************************///
+        // AntiCheat
+        void SetSkipOnePacketForASH(bool blinked) { m_skipOnePacketForASH = blinked; }
+        bool IsSkipOnePacketForASH() const { return m_skipOnePacketForASH; }
+        void SetJumpingbyOpcode(bool jump) { m_isjumping = jump; }
+        bool IsJumpingbyOpcode() const { return m_isjumping; }
+        void SetCanFlybyServer(bool canfly) { m_canfly = canfly; }
+        bool IsCanFlybyServer() const { return m_canfly; }
+
+        bool UnderACKmount() const { return m_ACKmounted; }
+        bool UnderACKRootUpd() const { return m_rootUpd; }
+        void SetUnderACKmount();
+        void SetRootACKUpd(uint32 delay);
+
+        // should only be used by packet handlers to validate and apply incoming MovementInfos from clients. Do not use internally to modify m_movementInfo
+        void UpdateMovementInfo(MovementInfo const& movementInfo);
+        bool CheckMovementInfo(MovementInfo const& movementInfo, bool jump); // ASH
+        bool CheckOnFlyHack(); // AFH
+
+        void SetLastMoveClientTimestamp(uint32 timestamp) { lastMoveClientTimestamp = timestamp; }
+        void SetLastMoveServerTimestamp(uint32 timestamp) { lastMoveServerTimestamp = timestamp; }
+        uint32 GetLastMoveClientTimestamp() const { return lastMoveClientTimestamp; }
+        uint32 GetLastMoveServerTimestamp() const { return lastMoveServerTimestamp; }
+        //End of Custom Systems
+
         void DurabilityLossAll(double percent, bool inventory);
         void DurabilityLoss(Item* item, double percent);
         void DurabilityPointsLossAll(int32 points, bool inventory);
@@ -2863,6 +2890,18 @@ class Player : public Unit, public GridObject<Player>
         uint8 m_swingErrorMsg;
         float m_ammoDPS;
 
+        ///////////////Anticheat System/////////////////////
+        uint32 m_flyhackTimer;
+        uint32 m_mountTimer;
+        uint32 m_rootUpdTimer;
+        bool   m_ACKmounted;
+        bool   m_rootUpd;
+        /* Player Movement fields START*/
+        // Timestamp on client clock of the moment the most recently processed movement packet was SENT by the client
+        uint32 lastMoveClientTimestamp;
+        // Timestamp on server clock of the moment the most recently processed movement packet was RECEIVED from the client
+        uint32 lastMoveServerTimestamp;
+
         ////////////////////Rest System/////////////////////
         time_t _restTime;
         uint32 _innTriggerId;
@@ -2951,6 +2990,11 @@ class Player : public Unit, public GridObject<Player>
         uint32 m_DelayedOperations;
         bool m_bMustDelayTeleport;
         bool m_bHasDelayedTeleport;
+
+        // Anticheat features
+        bool m_skipOnePacketForASH; // Used for skip 1 movement packet after charge or blink
+        bool m_isjumping;           // Used for jump-opcode in movementhandler
+        bool m_canfly;              // Used for access at fly flag - handled restricted access
 
         // Temporary removed pet cache
         uint32 m_temporaryUnsummonedPetNumber;
